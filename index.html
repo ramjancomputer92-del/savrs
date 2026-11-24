@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="SavRS — simple tools for media you own or are authorized to download.">
+  <title>SavRS — All Your Media Tools</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="SavRS home"><span class="brand-mark">M</span><span>Sav<span class="brand-accent">RS</span></span></a>
+    <nav><a href="#tools">Tools</a><a href="#how">How it works</a><a href="#faq">FAQ</a></nav>
+    <a class="top-cta" href="#tools">Explore tools <span>↗</span></a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="pulse"></span> SIMPLE · FAST · RESPONSIVE</div>
+        <h1>Your media.<br><span>Made accessible.</span></h1>
+        <p class="hero-text">Useful tools for thumbnails and media files you own or have permission to save. No account needed for the starter tools.</p>
+        <a class="primary-btn" href="#tools">Explore free tools <span>→</span></a>
+        <div class="trust-row"><span>✓ No signup</span><span>✓ Mobile friendly</span><span>✓ Privacy-minded</span></div>
+      </div>
+      <div class="hero-card">
+        <div class="window-dots"><i></i><i></i><i></i><span>MEDIAGRAB / TOOLBOX</span></div>
+        <div class="preview-title">What would you like to do?</div>
+        <div class="preview-item"><span class="preview-icon red">▶</span><div><b>YouTube thumbnail</b><small>Get an available preview image</small></div><span class="arrow">↗</span></div>
+        <div class="preview-item"><span class="preview-icon blue">↓</span><div><b>Direct media file</b><small>Save a file from a direct URL</small></div><span class="arrow">↗</span></div>
+        <div class="preview-item"><span class="preview-icon violet">◎</span><div><b>Platform links</b><small>See official save options</small></div><span class="arrow">↗</span></div>
+        <div class="preview-note">Built for content you own or are authorized to use.</div>
+      </div>
+    </section>
+
+    <section class="tool-section" id="tools">
+      <div class="section-heading"><div><div class="eyebrow">THE TOOLBOX</div><h2>Choose your tool</h2><p>Start with a link. SavRS will guide you to an available, permitted action.</p></div><span class="free-pill">FREE STARTER TOOLS</span></div>
+
+      <div class="tool-grid">
+        <article class="tool-card featured">
+          <div class="tool-icon red">▶</div><div class="tag">READY TO USE</div>
+          <h3>YouTube Thumbnail</h3><p>Extract an available thumbnail image from a YouTube video URL.</p>
+          <button class="tool-button" data-tool="youtube">Open tool <span>→</span></button>
+        </article>
+        <article class="tool-card">
+          <div class="tool-icon blue">↓</div><div class="tag">READY TO USE</div>
+          <h3>Direct File Downloader</h3><p>Save a direct media file URL when the server permits access.</p>
+          <button class="tool-button" data-tool="direct">Open tool <span>→</span></button>
+        </article>
+        <article class="tool-card">
+          <div class="tool-icon violet">◎</div><div class="tag">GUIDED</div>
+          <h3>Social Platform Links</h3><p>Open official options for content from Facebook and Instagram.</p>
+          <button class="tool-button" data-tool="social">Open guide <span>→</span></button>
+        </article>
+      </div>
+    </section>
+
+    <section class="workspace" id="workspace" aria-live="polite">
+      <div class="workspace-head"><div><div class="eyebrow">QUICK ACTION</div><h2 id="workspace-title">YouTube Thumbnail Downloader</h2></div><span class="secure-label">● Browser-based</span></div>
+      <div class="input-row"><label class="sr-only" for="media-url">Paste a link</label><input id="media-url" type="url" placeholder="Paste a YouTube video URL here…" autocomplete="url"><button id="run-tool" class="primary-btn">Get thumbnail <span>→</span></button></div>
+      <p class="hint" id="tool-hint">Supports standard YouTube video links, youtu.be links and Shorts links.</p>
+      <div id="result" class="result hidden"></div>
+      <div id="notice" class="notice hidden" role="status"></div>
+    </section>
+
+    <section class="steps" id="how">
+      <div class="eyebrow">THREE SIMPLE STEPS</div><h2>How SavRS works</h2>
+      <div class="step-grid">
+        <div class="step"><span>01</span><h3>Paste a link</h3><p>Use a supported link or a direct file URL.</p></div>
+        <div class="step"><span>02</span><h3>Choose an action</h3><p>Preview the result or follow the platform's official save process.</p></div>
+        <div class="step"><span>03</span><h3>Save responsibly</h3><p>Only download content you own or have permission to save.</p></div>
+      </div>
+    </section>
+
+    <section class="faq" id="faq"><div><div class="eyebrow">GOOD TO KNOW</div><h2>Frequently asked questions</h2></div>
+      <details><summary>Can SavRS download every Instagram, Facebook or YouTube video?</summary><p>No. Platform restrictions, copyright and access controls apply. This starter version does not bypass logins, private accounts, DRM or platform protections. Use each platform's official download or save feature where available.</p></details>
+      <details><summary>Why might a direct file link not download?</summary><p>The host may block cross-origin requests, require authentication, or prevent downloads. Try the file owner's official download link.</p></details>
+      <details><summary>Is the website free?</summary><p>This starter frontend can be hosted on a free static hosting plan. Hosting providers and third-party services may have usage limits or change their free tiers.</p></details>
+    </section>
+  </main>
+
+  <footer><a class="brand" href="#"><span class="brand-mark">M</span><span>Sav<span class="brand-accent">RS</span></span></a><p>Use responsibly. Respect creators, copyright and platform terms.</p><span>© <span id="year"></span> SavRS</span></footer>
+  <script src="app.js"></script>
+</body>
+</html>
