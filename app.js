@@ -1,161 +1,226 @@
+
+"use strict";
+
 document.addEventListener("DOMContentLoaded", () => {
-  const platformButtons = document.querySelectorAll(".platform-card");
-  const videoUrl = document.getElementById("videoUrl");
-  const formatSelect = document.getElementById("formatSelect");
-  const selectedPlatform = document.getElementById("selectedPlatform");
-  const pasteBtn = document.getElementById("pasteBtn");
-  const downloadBtn = document.getElementById("downloadBtn");
-  const statusBox = document.getElementById("statusBox");
-
-  let currentPlatform = "youtube";
-
-  const platformNames = {
-    youtube: "YouTube",
-    facebook: "Facebook",
-    instagram: "Instagram"
+  const platforms = {
+    youtube: {
+      input: "youtubeUrl",
+      previewButton: "youtubePreviewBtn",
+      preview: "youtubePreview",
+      thumbnail: "youtubeThumbnail",
+      title: "youtubeVideoTitle",
+      format: "youtubeFormat",
+      action: "youtubeActionBtn",
+      status: "youtubeStatus",
+      hosts: ["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"],
+      label: "YouTube"
+    },
+    facebook: {
+      input: "facebookUrl",
+      previewButton: "facebookPreviewBtn",
+      preview: "facebookPreview",
+      thumbnail: "facebookThumbnail",
+      title: "facebookVideoTitle",
+      format: "facebookFormat",
+      action: "facebookActionBtn",
+      status: "facebookStatus",
+      hosts: ["facebook.com", "www.facebook.com", "m.facebook.com", "fb.watch"],
+      label: "Facebook"
+    },
+    instagram: {
+      input: "instagramUrl",
+      previewButton: "instagramPreviewBtn",
+      preview: "instagramPreview",
+      thumbnail: "instagramThumbnail",
+      title: "instagramVideoTitle",
+      format: "instagramFormat",
+      action: "instagramActionBtn",
+      status: "instagramStatus",
+      hosts: ["instagram.com", "www.instagram.com"],
+      label: "Instagram"
+    }
   };
 
-  const placeholders = {
-    youtube: "Paste YouTube video URL here...",
-    facebook: "Paste Facebook video URL here...",
-    instagram: "Paste Instagram Reel URL here..."
-  };
-
-  function showStatus(message, type = "info") {
-    statusBox.textContent = message;
-    statusBox.dataset.type = type;
+  function getElement(id) {
+    return document.getElementById(id);
   }
 
-  function selectPlatform(platform) {
-    if (!platformNames[platform]) return;
+  function setStatus(config, message, isError = false) {
+    const element = getElement(config.status);
+    if (!element) return;
 
-    currentPlatform = platform;
-
-    platformButtons.forEach(button => {
-      const active = button.dataset.platform === platform;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-pressed", String(active));
-    });
-
-    selectedPlatform.textContent = platformNames[platform] + " selected";
-    videoUrl.placeholder = placeholders[platform];
-    videoUrl.value = "";
-
-    showStatus("Paste your " + platformNames[platform] + " link to continue.");
+    element.textContent = message;
+    element.style.color = isError ? "#ff8585" : "#00d6c5";
   }
 
-  platformButtons.forEach(button => {
-    button.addEventListener("click", () => {
-      selectPlatform(button.dataset.platform);
-    });
-  });
-
-  pasteBtn.addEventListener("click", async () => {
+  function getSafeUrl(value) {
     try {
-      const text = await navigator.clipboard.readText();
+      const url = new URL(value.trim());
 
-      if (!text) {
-        showStatus("Your clipboard is empty.", "error");
+      if (url.protocol !== "https:" && url.protocol !== "http:") {
+        return null;
+      }
+
+      if (url.username || url.password) {
+        return null;
+      }
+
+      return url;
+    } catch {
+      return null;
+    }
+  }
+
+  function isSupportedHost(url, config) {
+    return config.hosts.includes(url.hostname.toLowerCase());
+  }
+
+  function getYouTubeId(url) {
+    const host = url.hostname.toLowerCase();
+    let id = "";
+
+    if (host === "youtu.be") {
+      id = url.pathname.split("/").filter(Boolean)[0] || "";
+    } else if (url.pathname === "/watch") {
+      id = url.searchParams.get("v") || "";
+    } else {
+      const parts = url.pathname.split("/").filter(Boolean);
+
+      if (["shorts", "embed", "live"].includes(parts[0])) {
+        id = parts[1] || "";
+      }
+    }
+
+    return /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : null;
+  }
+
+  function clearPreview(config) {
+    const preview = getElement(config.preview);
+    const image = getElement(config.thumbnail);
+    const title = getElement(config.title);
+
+    if (preview) preview.hidden = true;
+
+    if (image) {
+      image.removeAttribute("src");
+      image.alt = config.label + " thumbnail preview";
+    }
+
+    if (title) title.textContent = config.label + " Preview";
+  }
+
+  function showYouTubePreview(config, id) {
+    const preview = getElement(config.preview);
+    const image = getElement(config.thumbnail);
+    const title = getElement(config.title);
+
+    if (!preview || !image || !title) return;
+
+    const thumbnailUrl =
+      "https://img.youtube.com/vi/" + encodeURIComponent(id) + "/hqdefault.jpg";
+
+    image.onerror = () => {
+      image.removeAttribute("src");
+      title.textContent = "Thumbnail is unavailable.";
+    };
+
+    image.onload = () => {
+      title.textContent = "YouTube video preview";
+    };
+
+    image.src = thumbnailUrl;
+    preview.hidden = false;
+  }
+
+  function previewPlatform(key) {
+    const config = platforms[key];
+    const input = getElement(config.input);
+
+    if (!input) return;
+
+    const url = getSafeUrl(input.value);
+
+    clearPreview(config);
+
+    if (!url) {
+      setStatus(config, "Please enter a valid HTTP or HTTPS link.", true);
+      return;
+    }
+
+    if (!isSupportedHost(url, config)) {
+      setStatus(config, "This link does not appear to belong to " + config.label + ".", true);
+      return;
+    }
+
+    if (key === "youtube") {
+      const id = getYouTubeId(url);
+
+      if (!id) {
+        setStatus(config, "Could not identify a valid YouTube video ID.", true);
         return;
       }
 
-      videoUrl.value = text.trim();
-      showStatus("Link pasted. Now press Continue.", "success");
-    } catch (error) {
-      showStatus("Clipboard access unavailable. Please paste the link manually.", "error");
-      videoUrl.focus();
-    }
-  });
-
-  function getPlatformFromUrl(value) {
-    try {
-      const url = new URL(value);
-      const host = url.hostname.toLowerCase().replace(/^www\./, "");
-
-      if (
-        host === "youtube.com" ||
-        host === "youtu.be" ||
-        host === "m.youtube.com" ||
-        host === "youtube-nocookie.com"
-      ) {
-        return "youtube";
-      }
-
-      if (
-        host === "facebook.com" ||
-        host === "fb.watch" ||
-        host === "m.facebook.com"
-      ) {
-        return "facebook";
-      }
-
-      if (
-        host === "instagram.com" ||
-        host === "instagr.am"
-      ) {
-        return "instagram";
-      }
-
-      return null;
-    } catch {
-      return null;
-    }
-  }
-
-  function validHttpUrl(value) {
-    try {
-      const url = new URL(value);
-      return url.protocol === "https:" || url.protocol === "http:";
-    } catch {
-      return false;
-    }
-  }
-
-  downloadBtn.addEventListener("click", async () => {
-    const link = videoUrl.value.trim();
-    const format = formatSelect.value;
-
-    if (!link) {
-      showStatus("Please paste a video link first.", "error");
-      videoUrl.focus();
+      showYouTubePreview(config, id);
+      setStatus(config, "YouTube thumbnail preview requested. Downloading is not provided by this link checker.");
       return;
     }
 
-    if (!validHttpUrl(link)) {
-      showStatus("Please enter a valid HTTP or HTTPS link.", "error");
-      return;
-    }
-
-    const detectedPlatform = getPlatformFromUrl(link);
-
-    if (!detectedPlatform) {
-      showStatus("This platform is not supported. Use YouTube, Facebook or Instagram.", "error");
-      return;
-    }
-
-    if (detectedPlatform !== currentPlatform) {
-      showStatus(
-        "This is a " + platformNames[detectedPlatform] +
-        " link. Please select " + platformNames[detectedPlatform] +
-        " above and try again.",
-        "error"
-      );
-      return;
-    }
-
-    showStatus(
-      "Your " + platformNames[currentPlatform] +
-      " link is valid. Actual " + format.toUpperCase() +
-      " processing is not connected yet. Backend setup is the next step.",
-      "info"
+    setStatus(
+      config,
+      config.label + " link recognized. A thumbnail preview is not available through this tool."
     );
-  });
+  }
 
-  videoUrl.addEventListener("input", () => {
-    if (videoUrl.value.trim()) {
-      showStatus("Link entered. Select your format and press Continue.");
+  function checkPlatform(key) {
+    const config = platforms[key];
+    const input = getElement(config.input);
+    const format = getElement(config.format);
+
+    if (!input || !format) return;
+
+    const url = getSafeUrl(input.value);
+
+    if (!url) {
+      setStatus(config, "Please enter a valid HTTP or HTTPS link.", true);
+      return;
+    }
+
+    if (!isSupportedHost(url, config)) {
+      setStatus(config, "This link does not appear to belong to " + config.label + ".", true);
+      return;
+    }
+
+    const selectedFormat = format.value.toUpperCase();
+
+    setStatus(
+      config,
+      selectedFormat + " direct downloading is not available through the official public link checker. Use the platform's official save/export options, or convert a file you own using SavRS MP3 Converter."
+    );
+  }
+
+  Object.entries(platforms).forEach(([key, config]) => {
+    const previewButton = getElement(config.previewButton);
+    const actionButton = getElement(config.action);
+    const input = getElement(config.input);
+
+    if (previewButton) {
+      previewButton.addEventListener("click", () => previewPlatform(key));
+    }
+
+    if (actionButton) {
+      actionButton.addEventListener("click", () => checkPlatform(key));
+    }
+
+    if (input) {
+      input.addEventListener("input", () => {
+        clearPreview(config);
+        setStatus(config, "");
+      });
     }
   });
 
-  selectPlatform("youtube");
+  const year = getElement("currentYear");
+  if (year) {
+    year.textContent = new Date().getFullYear();
+  }
 });
