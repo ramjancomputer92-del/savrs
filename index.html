@@ -1,140 +1,193 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#071426">
-  <meta name="description" content="SavRS - Free online media tools for authorized files, thumbnails and media conversion.">
+  <meta name="theme-color" content="#07111f">
+  <meta name="description" content="SavRS - Simple video and audio tools for your media links.">
   <title>SavRS - All in One Media Downloader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
 </head>
+
 <body>
-  <header class="topbar">
-    <a class="brand" href="#">
-      <span class="brand-icon">S</span>
-      <span>Sav<span class="cyan">RS</span></span>
-    </a>
+  <header class="site-header">
+    <a href="#" class="logo">Sav<span>RS</span></a>
     <nav>
-      <a href="#tools">Tools</a>
+      <a href="#downloader">Downloader</a>
+      <a href="#features">Features</a>
       <a href="#how">How it works</a>
-      <a href="#faq">FAQ</a>
     </nav>
-    <a class="nav-button" href="#tools">Explore Tools ↗</a>
+    <a class="header-btn" href="#downloader">Get Started</a>
   </header>
 
   <main>
     <section class="hero">
-      <div class="hero-content">
-        <span class="eyebrow">SIMPLE · FAST · FREE TOOLS</span>
-        <h1>Your Media.<br><span>One Simple Place.</span></h1>
-        <p>Useful online tools for media files, thumbnails and authorized downloads. Simple, fast and mobile friendly.</p>
-        <a class="main-button" href="#tools">Explore Free Tools <span>→</span></a>
-        <div class="trust">
-          <span>✓ No signup required</span>
-          <span>✓ Mobile friendly</span>
-          <span>✓ Easy to use</span>
+      <div class="hero-tag">ALL YOUR MEDIA IN ONE PLACE</div>
+      <h1>Video & Audio<br><span>Made Simple.</span></h1>
+      <p>One simple place for your video links, audio conversion and media tools.</p>
+      <a class="primary-btn" href="#downloader">Start Now ↓</a>
+      <div class="hero-note">Simple • Fast • Mobile Friendly</div>
+    </section>
+
+    <section class="downloader-section" id="downloader">
+      <div class="section-heading">
+        <span class="small-label">SAVRS DOWNLOADER</span>
+        <h2>Choose Your Platform</h2>
+        <p>Select a platform and paste your video link below.</p>
+      </div>
+
+      <div class="platform-grid">
+        <button class="platform-card active" type="button" data-platform="youtube">
+          <span class="platform-icon youtube">▶</span>
+          <span>YouTube</span>
+        </button>
+
+        <button class="platform-card" type="button" data-platform="facebook">
+          <span class="platform-icon facebook">f</span>
+          <span>Facebook</span>
+        </button>
+
+        <button class="platform-card" type="button" data-platform="instagram">
+          <span class="platform-icon instagram">◎</span>
+          <span>Instagram Reels</span>
+        </button>
+      </div>
+
+      <div class="download-box">
+        <div class="input-title">
+          <label for="videoUrl">Paste your video link</label>
+          <span id="selectedPlatform">YouTube selected</span>
         </div>
-      </div>
 
-      <div class="hero-panel">
-        <div class="panel-top"><span></span><span></span><span></span> SAVRS TOOLBOX</div>
-        <h3>What do you want to do?</h3>
-        <div class="panel-item"><b class="p-icon">↓</b><div><strong>Direct File</strong><small>Open an authorized file link</small></div></div>
-        <div class="panel-item"><b class="p-icon">▶</b><div><strong>YouTube Thumbnail</strong><small>Preview available thumbnails</small></div></div>
-        <div class="panel-item"><b class="p-icon">♫</b><div><strong>Video to MP3</strong><small>Convert your own media files</small></div></div>
-        <p class="panel-note">Tools for files you own or have permission to use.</p>
-      </div>
-    </section>
+        <div class="url-input-wrap">
+          <input
+            type="url"
+            id="videoUrl"
+            placeholder="Paste YouTube video URL here..."
+            autocomplete="url"
+          >
+          <button type="button" id="pasteBtn">Paste</button>
+        </div>
 
-    <section class="tools-section" id="tools">
-      <div class="section-title">
-        <span class="eyebrow">OUR TOOLBOX</span>
-        <h2>Choose Your Tool</h2>
-        <p>Select a tool to get started.</p>
-      </div>
+        <div class="format-area">
+          <label for="formatSelect">Choose format</label>
+          <select id="formatSelect">
+            <option value="mp4">Video - MP4</option>
+            <option value="mp3">Audio - MP3</option>
+          </select>
+        </div>
 
-      <div class="tool-grid">
-        <article class="tool-card">
-          <div class="tool-icon">▶</div>
-          <span class="tool-tag">PREVIEW</span>
-          <h3>YouTube Thumbnail</h3>
-          <p>Preview and open an available YouTube thumbnail image.</p>
-          <button class="tool-button" data-tool="youtube">Open Tool →</button>
-        </article>
+        <button type="button" class="download-btn" id="downloadBtn">
+          Continue
+        </button>
 
-        <article class="tool-card">
-          <div class="tool-icon">↓</div>
-          <span class="tool-tag">DIRECT LINK</span>
-          <h3>Direct File Downloader</h3>
-          <p>Open a direct HTTPS link to a file you are allowed to download.</p>
-          <button class="tool-button" data-tool="direct">Open Tool →</button>
-        </article>
+        <div id="statusBox" class="status-box" role="status" aria-live="polite">
+          Paste a link to get started.
+        </div>
 
-        <article class="tool-card">
-          <div class="tool-icon">♫</div>
-          <span class="tool-tag">CONVERTER</span>
-          <h3>Video to MP3</h3>
-          <p>Convert your own video or audio file into an MP3 file.</p>
-          <button class="tool-button" data-tool="audio">Open Tool →</button>
-        </article>
-
-        <article class="tool-card">
-          <div class="tool-icon">◎</div>
-          <span class="tool-tag">OFFICIAL GUIDE</span>
-          <h3>Social Media Guide</h3>
-          <p>Find official help and save options for social platforms.</p>
-          <button class="tool-button" data-tool="social">Open Guide →</button>
-        </article>
+        <p class="legal-note">
+          Only use media you own or have permission to download.
+          Platform restrictions and copyright rules apply.
+        </p>
       </div>
     </section>
 
-    <section class="workspace" id="workspace">
-      <span class="eyebrow">QUICK TOOL</span>
-      <h2 id="workspace-title">YouTube Thumbnail Preview</h2>
-      <p id="tool-hint">Paste a YouTube video or Shorts link below.</p>
-
-      <div class="input-row" id="url-area">
-        <input id="media-url" type="url" placeholder="Paste your link here..." autocomplete="url">
+    <section class="features-section" id="features">
+      <div class="section-heading">
+        <span class="small-label">WHY SAVRS</span>
+        <h2>Everything in One Place</h2>
       </div>
 
-      <div class="upload-area hidden" id="upload-area">
-        <label for="media-file">Choose a video or audio file from your device</label>
-        <input type="file" id="media-file" accept="video/*,audio/*">
-        <small>For files you own or have permission to convert. Browser processing; large files may be slow.</small>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <div class="feature-icon">▶</div>
+          <h3>YouTube Tools</h3>
+          <p>Video link tools and audio conversion for supported content.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">f</div>
+          <h3>Facebook Tools</h3>
+          <p>Convenient tools for your own or authorized Facebook media.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">◎</div>
+          <h3>Instagram Reels</h3>
+          <p>Tools for working with your own or authorized Reels.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">♫</div>
+          <h3>MP3 Converter</h3>
+          <p>Convert supported media files into MP3 audio.</p>
+        </article>
       </div>
-
-      <button id="run-tool" class="main-button action-button">Get Thumbnail →</button>
-
-      <div id="notice" class="notice hidden" role="status"></div>
-      <div id="result" class="result hidden" aria-live="polite"></div>
     </section>
 
     <section class="how-section" id="how">
-      <span class="eyebrow">HOW IT WORKS</span>
-      <h2>Three Simple Steps</h2>
-      <div class="steps">
-        <div><b>01</b><h3>Choose a Tool</h3><p>Select the tool you need.</p></div>
-        <div><b>02</b><h3>Add Your File or Link</h3><p>Paste a supported link or select your file.</p></div>
-        <div><b>03</b><h3>Get Your Result</h3><p>Preview, open or convert your authorized media.</p></div>
+      <div class="section-heading">
+        <span class="small-label">THREE SIMPLE STEPS</span>
+        <h2>How SavRS Works</h2>
+      </div>
+
+      <div class="steps-grid">
+        <article class="step-card">
+          <span>01</span>
+          <h3>Select Platform</h3>
+          <p>Choose YouTube, Facebook or Instagram.</p>
+        </article>
+        <article class="step-card">
+          <span>02</span>
+          <h3>Paste Link</h3>
+          <p>Enter the link of your authorized media.</p>
+        </article>
+        <article class="step-card">
+          <span>03</span>
+          <h3>Choose Format</h3>
+          <p>Select MP4 video or MP3 audio where supported.</p>
+        </article>
       </div>
     </section>
 
-    <section class="faq" id="faq">
-      <span class="eyebrow">HELP CENTER</span>
-      <h2>Frequently Asked Questions</h2>
-      <details><summary>Can SavRS download every social media video?</summary><p>No. Platform rules, copyright and access restrictions apply. SavRS does not bypass private accounts, logins, DRM or platform protections. Use official download options where available.</p></details>
-      <details><summary>Can I convert a video to MP3?</summary><p>Yes. Select a video or audio file stored on your device. Conversion is performed in your browser. Use only content you own or are authorized to convert.</p></details>
-      <details><summary>Why might a direct link not download?</summary><p>The file host may block browser downloads, require authentication or prevent cross-origin access. Try the owner's official download option.</p></details>
-      <details><summary>Is SavRS free?</summary><p>The current starter tools are free to use. Hosting and third-party service limits may apply.</p></details>
+    <section class="faq-section">
+      <div class="section-heading">
+        <span class="small-label">HELP CENTER</span>
+        <h2>Frequently Asked Questions</h2>
+      </div>
+
+      <details>
+        <summary>Is SavRS free to use?</summary>
+        <p>SavRS is being developed with free-to-use tools. Some future services may have limits.</p>
+      </details>
+
+      <details>
+        <summary>Can I choose MP3 or MP4?</summary>
+        <p>The interface offers both choices. Actual conversion depends on supported sources and the backend.</p>
+      </details>
+
+      <details>
+        <summary>Can I download private videos?</summary>
+        <p>No. SavRS is not designed to bypass private access, DRM or platform restrictions.</p>
+      </details>
+
+      <details>
+        <summary>Does every social media link work?</summary>
+        <p>No. Platform access, permissions and technical restrictions may prevent processing.</p>
+      </details>
     </section>
   </main>
 
-  <footer>
-    <a class="brand" href="#"><span class="brand-icon">S</span><span>Sav<span class="cyan">RS</span></span></a>
-    <p>Useful media tools. Use responsibly and respect creators.</p>
-    <span>© <span id="year"></span> SavRS</span>
+  <footer class="site-footer">
+    <a href="#" class="logo">Sav<span>RS</span></a>
+    <p>All in One Media Tools</p>
+    <p class="copyright">© 2026 SavRS. All rights reserved.</p>
+    <p class="footer-note">Use media responsibly and respect copyright.</p>
   </footer>
-
-  <script src="app.js"></script>
 </body>
 </html>
