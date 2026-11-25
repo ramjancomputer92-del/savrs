@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07111f">
+  <title>SavRS MP3 Converter</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .converter-page {
+      max-width: 750px;
+      margin: 70px auto;
+      padding: 25px;
+    }
+    .converter-card {
+      background: #101f32;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 18px;
+      padding: 30px;
+    }
+    .converter-card h1 {
+      margin-bottom: 12px;
+    }
+    .converter-card p {
+      color: #9aabc0;
+      margin-bottom: 22px;
+    }
+    .file-input {
+      width: 100%;
+      padding: 20px;
+      background: #081625;
+      color: white;
+      border: 1px dashed #00d5c0;
+      border-radius: 10px;
+      margin: 15px 0;
+    }
+    .convert-action {
+      width: 100%;
+      padding: 15px;
+      border: 0;
+      border-radius: 9px;
+      background: #00d5c0;
+      color: #07111f;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    #converterStatus {
+      margin-top: 18px;
+      color: #00d5c0;
+      overflow-wrap: anywhere;
+    }
+    @media(max-width:600px) {
+      .converter-page { margin: 35px auto; padding: 15px; }
+      .converter-card { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a href="index.html" class="logo">Sav<span>RS</span></a>
+    <a class="header-btn" href="index.html">Home</a>
+  </header>
+
+  <main class="converter-page">
+    <div class="converter-card">
+      <span class="small-label">SAVRS AUDIO TOOL</span>
+      <h1>Video to MP3 Converter</h1>
+      <p>Select a video or audio file from your device to prepare an MP3 conversion.</p>
+
+      <label for="mediaFile">Choose your media file</label>
+      <input
+        class="file-input"
+        type="file"
+        id="mediaFile"
+        accept="video/*,audio/*"
+      >
+
+      <button class="convert-action" id="convertButton" type="button">
+        Convert to MP3
+      </button>
+
+      <div id="converterStatus" role="status" aria-live="polite">
+        Select a file to get started.
+      </div>
+
+      <div id="downloadArea"></div>
+
+      <p style="font-size:12px;margin-top:25px">
+        Only convert media you own or have permission to use.
+        Large files may require more memory and processing time.
+      </p>
+    </div>
+  </main>
+
+  <script src="mp3.js" defer></script>
+</body>
+</html>
