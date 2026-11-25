@@ -1,179 +1,330 @@
-const urlInput = document.getElementById('media-url');
-const runButton = document.getElementById('run-tool');
-const result = document.getElementById('result');
-const notice = document.getElementById('notice');
-const uploadArea = document.getElementById('upload-area');
-const mediaFile = document.getElementById('media-file');
-const title = document.getElementById('workspace-title');
-const hint = document.getElementById('tool-hint');
-let currentTool = 'youtube';
+const urlInput = document.getElementById("media-url");
+const runButton = document.getElementById("run-tool");
+const result = document.getElementById("result");
+const notice = document.getElementById("notice");
+const uploadArea = document.getElementById("upload-area");
+const mediaFile = document.getElementById("media-file");
+const urlArea = document.getElementById("url-area");
+const title = document.getElementById("workspace-title");
+const hint = document.getElementById("tool-hint");
+
+let currentTool = "youtube";
 let ffmpegInstance = null;
 
-document.getElementById('year').textContent = new Date().getFullYear();
+document.getElementById("year").textContent = new Date().getFullYear();
+
+function clearOutput() {
+  notice.classList.add("hidden");
+  result.classList.add("hidden");
+  result.replaceChildren();
+}
 
 function showNotice(message) {
+  result.classList.add("hidden");
   notice.textContent = message;
-  notice.classList.remove('hidden');
-  result.classList.add('hidden');
+  notice.classList.remove("hidden");
 }
-function clearOutput() {
-  notice.classList.add('hidden');
-  result.classList.add('hidden');
-  result.innerHTML = '';
+
+function addLink(parent, text, url, downloadName) {
+  const link = document.createElement("a");
+  link.className = "secondary-button";
+  link.textContent = text;
+  link.href = url;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+
+  if (downloadName) {
+    link.download = downloadName;
+  }
+
+  parent.appendChild(link);
 }
+
+function showResult() {
+  result.classList.remove("hidden");
+  notice.classList.add("hidden");
+}
+
 function extractYouTubeId(raw) {
   try {
-    const u = new URL(raw);
-    const host = u.hostname.replace(/^www\./, '').toLowerCase();
-    if (host === 'youtu.be') return u.pathname.split('/').filter(Boolean)[0] || null;
-    if (['youtube.com','m.youtube.com','music.youtube.com'].includes(host)) {
-      if (u.pathname === '/watch') return u.searchParams.get('v');
-      const parts = u.pathname.split('/').filter(Boolean);
-      if (['shorts','embed','live'].includes(parts[0])) return parts[1] || null;
+    const url = new URL(raw);
+    const host = url.hostname.replace(/^www\./, "").toLowerCase();
+
+    if (host === "youtu.be") {
+      return url.pathname.split("/").filter(Boolean)[0] || null;
     }
-  } catch (_) {}
+
+    if (["youtube.com", "m.youtube.com", "music.youtube.com"].includes(host)) {
+      if (url.pathname === "/watch") return url.searchParams.get("v");
+
+      const parts = url.pathname.split("/").filter(Boolean);
+      if (["shorts", "embed", "live"].includes(parts[0])) {
+        return parts[1] || null;
+      }
+    }
+  } catch (error) {
+    return null;
+  }
+
   return null;
 }
-function safeYouTubeId(id) { return /^[a-zA-Z0-9_-]{11}$/.test(id || ''); }
 
 function renderThumbnail() {
   clearOutput();
-  const raw = urlInput.value.trim();
-  const id = extractYouTubeId(raw);
-  if (!id || !safeYouTubeId(id)) {
-    showNotice('Please paste a valid YouTube video, Shorts, or youtu.be link.');
+
+  const id = extractYouTubeId(urlInput.value.trim());
+
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(id || "")) {
+    showNotice("Please enter a valid YouTube video or Shorts link.");
     return;
   }
+
   const imageUrl = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-  result.classList.remove('hidden');
-  result.innerHTML = `
-    <strong>Thumbnail preview</strong>
-    <img src="${imageUrl}" alt="YouTube thumbnail preview" referrerpolicy="no-referrer">
-    <div class="result-actions">
-      <a class="secondary-btn" href="${imageUrl}" target="_blank" rel="noopener">Open image</a>
-      <a class="secondary-btn" href="${imageUrl}" download="mediagrab-youtube-thumbnail.jpg">Download thumbnail</a>
-    </div>
-    <p class="hint">Use this image only when you have the right to reuse it. Some videos may not provide this thumbnail size.</p>`;
+
+  const heading = document.createElement("h3");
+  heading.textContent = "Thumbnail Preview";
+
+  const image = document.createElement("img");
+  image.src = imageUrl;
+  image.alt = "YouTube thumbnail preview";
+
+  image.onerror = () => {
+    showNotice("Thumbnail is not available for this video.");
+  };
+
+  const actions = document.createElement("div");
+  actions.className = "result-actions";
+
+  addLink(actions, "Open Image ↗", imageUrl);
+  addLink(actions, "Download Image", imageUrl, "SavRS-thumbnail.jpg");
+
+  const note = document.createElement("p");
+  note.textContent = "Reuse thumbnails only when you have permission.";
+
+  result.append(heading, image, actions, note);
+  showResult();
 }
 
 function renderDirect() {
   clearOutput();
-  const raw = urlInput.value.trim();
+
   let parsed;
-  try { parsed = new URL(raw); } catch (_) { showNotice('Please enter a complete direct HTTPS media-file URL.'); return; }
-  if (parsed.protocol !== 'https:') { showNotice('For safety, this starter tool accepts HTTPS links only.'); return; }
-  const allowed = /\.(mp4|webm|mov|mp3|m4a|wav|jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(parsed.pathname + parsed.search);
-  if (!allowed) { showNotice('This does not look like a direct media-file URL. Paste a direct link ending in a supported file type.'); return; }
-  result.classList.remove('hidden');
-  result.innerHTML = `<strong>Direct media link detected</strong><p class="hint">The file host controls whether browser downloads are allowed. Continue only if you own this file or have permission to save it.</p><div class="result-actions"><a class="secondary-btn" href="${parsed.href.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" target="_blank" rel="noopener">Open file link ↗</a></div>`;
+
+  try {
+    parsed = new URL(urlInput.value.trim());
+  } catch (error) {
+    showNotice("Please enter a complete direct file URL.");
+    return;
+  }
+
+  if (parsed.protocol !== "https:") {
+    showNotice("For safety, only HTTPS links are accepted.");
+    return;
+  }
+
+  const allowed = /\.(mp4|webm|mov|mp3|m4a|wav|jpg|jpeg|png|webp|gif|pdf|zip)(\?.*)?$/i.test(
+    parsed.pathname + parsed.search
+  );
+
+  if (!allowed) {
+    showNotice("This link does not look like a supported direct file link.");
+    return;
+  }
+
+  const heading = document.createElement("h3");
+  heading.textContent = "Direct File Link Ready";
+
+  const message = document.createElement("p");
+  message.textContent =
+    "Continue only if you own this file or have permission to download it. The file host may control whether downloading is allowed.";
+
+  const actions = document.createElement("div");
+  actions.className = "result-actions";
+  addLink(actions, "Open File Link ↗", parsed.href);
+
+  result.append(heading, message, actions);
+  showResult();
 }
 
 function renderSocialGuide() {
   clearOutput();
-  result.classList.remove('hidden');
-  result.innerHTML = `<strong>Use official save options</strong>
-    <p class="hint">SavRS does not bypass private accounts, logins, DRM or platform restrictions. For content you own, use the platform's official export or download features.</p>
-    <div class="result-actions">
-      <a class="secondary-btn" href="https://www.facebook.com/help/" target="_blank" rel="noopener">Facebook Help ↗</a>
-      <a class="secondary-btn" href="https://help.instagram.com/" target="_blank" rel="noopener">Instagram Help ↗</a>
-      <a class="secondary-btn" href="https://support.google.com/youtube/" target="_blank" rel="noopener">YouTube Help ↗</a>
-    </div>`;
-}
 
+  const heading = document.createElement("h3");
+  heading.textContent = "Official Social Media Help";
+
+  const message = document.createElement("p");
+  message.textContent =
+    "Use the official platform options to save or export your own content. SavRS does not bypass private accounts, logins or platform restrictions.";
+
+  const actions = document.createElement("div");
+  actions.className = "result-actions";
+
+  addLink(actions, "Facebook Help ↗", "https://www.facebook.com/help/");
+  addLink(actions, "Instagram Help ↗", "https://help.instagram.com/");
+  addLink(actions, "YouTube Help ↗", "https://support.google.com/youtube/");
+
+  result.append(heading, message, actions);
+  showResult();
+}
 
 async function loadFFmpeg() {
   if (ffmpegInstance) return ffmpegInstance;
+
   if (!window.FFmpeg) {
     await new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js';
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js";
       script.onload = resolve;
-      script.onerror = () => reject(new Error('Could not load the conversion library. Check your internet connection and try again.'));
+      script.onerror = () => reject(
+        new Error("Could not load converter. Check your internet connection.")
+      );
       document.head.appendChild(script);
     });
   }
+
+  if (!window.FFmpeg || !window.FFmpeg.createFFmpeg) {
+    throw new Error("Converter library is not available in this browser.");
+  }
+
   const { createFFmpeg } = window.FFmpeg;
+
   ffmpegInstance = createFFmpeg({
     log: false,
-    corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
+    corePath: "https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js"
   });
+
   await ffmpegInstance.load();
   return ffmpegInstance;
 }
 
 async function convertToMp3() {
   clearOutput();
+
   const file = mediaFile.files && mediaFile.files[0];
-  if (!file) { showNotice('Please choose a video or audio file first.'); return; }
-  if (file.size > 150 * 1024 * 1024) {
-    showNotice('This starter version limits files to 150 MB to reduce browser memory issues. Try a smaller file.');
+
+  if (!file) {
+    showNotice("Please select a video or audio file first.");
     return;
   }
-  if (!file.type.startsWith('video/') && !file.type.startsWith('audio/')) {
-    showNotice('Please choose a supported video or audio file.');
+
+  if (!file.type.startsWith("video/") && !file.type.startsWith("audio/")) {
+    showNotice("Please select a valid video or audio file.");
     return;
   }
+
+  if (file.size > 100 * 1024 * 1024) {
+    showNotice("Please choose a file smaller than 100 MB for this browser version.");
+    return;
+  }
+
   runButton.disabled = true;
-  runButton.textContent = 'Loading converter…';
+  runButton.textContent = "Loading converter...";
+
   try {
     const ffmpeg = await loadFFmpeg();
-    const safeName = 'input_media';
-    const outputName = 'savrs-audio.mp3';
-    ffmpeg.FS('writeFile', safeName, await window.FFmpeg.fetchFile(file));
-    runButton.textContent = 'Converting…';
-    await ffmpeg.run('-i', safeName, '-vn', '-codec:a', 'libmp3lame', '-q:a', '2', outputName);
-    const data = ffmpeg.FS('readFile', outputName);
-    const blob = new Blob([data.buffer], { type: 'audio/mpeg' });
+
+    const inputName = "savrs-input";
+    const outputName = "savrs-output.mp3";
+
+    ffmpeg.FS("writeFile", inputName, await window.FFmpeg.fetchFile(file));
+
+    runButton.textContent = "Converting...";
+
+    await ffmpeg.run(
+      "-i", inputName,
+      "-vn",
+      "-codec:a", "libmp3lame",
+      "-q:a", "2",
+      outputName
+    );
+
+    const data = ffmpeg.FS("readFile", outputName);
+    const blob = new Blob([data], { type: "audio/mpeg" });
     const objectUrl = URL.createObjectURL(blob);
-    result.classList.remove('hidden');
-    result.innerHTML = `<strong>MP3 is ready</strong><p class="hint">Audio extracted in your browser. No file was uploaded to MediaGrab/SavRS servers.</p><div class="result-actions"><a class="secondary-btn" href="${objectUrl}" download="SavRS-audio.mp3">Download MP3</a></div>`;
-    try { ffmpeg.FS('unlink', safeName); ffmpeg.FS('unlink', outputName); } catch (_) {}
+
+    const heading = document.createElement("h3");
+    heading.textContent = "Your MP3 File Is Ready";
+
+    const message = document.createElement("p");
+    message.textContent = "Conversion completed in your browser.";
+
+    const actions = document.createElement("div");
+    actions.className = "result-actions";
+
+    const link = document.createElement("a");
+    link.className = "secondary-button";
+    link.href = objectUrl;
+    link.download = "SavRS-audio.mp3";
+    link.textContent = "Download MP3 ↓";
+
+    actions.appendChild(link);
+    result.append(heading, message, actions);
+    showResult();
+
+    try {
+      ffmpeg.FS("unlink", inputName);
+      ffmpeg.FS("unlink", outputName);
+    } catch (error) {}
+
   } catch (error) {
-    showNotice(error && error.message ? error.message : 'Conversion failed. Try another file or a smaller file.');
+    showNotice(error.message || "Conversion failed. Try a smaller file.");
   } finally {
     runButton.disabled = false;
-    runButton.innerHTML = 'Convert to MP3 <span>→</span>';
+    runButton.textContent = "Convert to MP3 →";
   }
 }
 
 function setTool(tool) {
   currentTool = tool;
   clearOutput();
-  urlInput.value = '';
-  mediaFile.value = '';
-  uploadArea.classList.add('hidden');
-  if (tool === 'youtube') {
-    title.textContent = 'YouTube Thumbnail Downloader';
-    hint.textContent = 'Supports standard YouTube video links, youtu.be links and Shorts links.';
-    urlInput.placeholder = 'Paste a YouTube video URL here…';
-    runButton.innerHTML = 'Get thumbnail <span>→</span>';
-    runButton.style.display = '';
-  } else if (tool === 'direct') {
-    title.textContent = 'Direct File Downloader';
-    hint.textContent = 'Paste a direct HTTPS URL to a media file you own or are allowed to download.';
-    urlInput.placeholder = 'https://example.com/my-video.mp4';
-    runButton.innerHTML = 'Check file link <span>→</span>';
-    runButton.style.display = '';
-  } else if (tool === 'audio') {
-    title.textContent = 'Video to MP3 Converter';
-    hint.textContent = 'Choose a video or audio file stored on your device. Conversion runs locally in your browser.';
-    urlInput.placeholder = 'File upload is used for MP3 conversion';
-    uploadArea.classList.remove('hidden');
-    runButton.innerHTML = 'Convert to MP3 <span>→</span>';
-    runButton.style.display = '';
-  } else {
-    title.textContent = 'Social Platform Download Guide';
-    hint.textContent = 'Choose an official help resource for Facebook, Instagram or YouTube.';
-    urlInput.placeholder = 'No link needed for this guide';
-    runButton.style.display = 'none';
+
+  urlInput.value = "";
+  mediaFile.value = "";
+
+  uploadArea.classList.add("hidden");
+  urlArea.classList.remove("hidden");
+  runButton.classList.remove("hidden");
+
+  if (tool === "youtube") {
+    title.textContent = "YouTube Thumbnail Preview";
+    hint.textContent = "Paste a YouTube video or Shorts link.";
+    urlInput.placeholder = "Paste YouTube link here...";
+    runButton.textContent = "Get Thumbnail →";
+  } else if (tool === "direct") {
+    title.textContent = "Direct File Downloader";
+    hint.textContent = "Paste a direct HTTPS link to a file you are allowed to download.";
+    urlInput.placeholder = "https://example.com/file.mp4";
+    runButton.textContent = "Check File Link →";
+  } else if (tool === "audio") {
+    title.textContent = "Video to MP3 Converter";
+    hint.textContent = "Choose your own video or audio file. Conversion runs in your browser.";
+    urlArea.classList.add("hidden");
+    uploadArea.classList.remove("hidden");
+    runButton.textContent = "Convert to MP3 →";
+  } else if (tool === "social") {
+    title.textContent = "Social Media Official Guide";
+    hint.textContent = "Find official help resources for social platforms.";
+    urlArea.classList.add("hidden");
+    runButton.classList.add("hidden");
     renderSocialGuide();
   }
-  document.getElementById('workspace').scrollIntoView({behavior:'smooth',block:'start'});
+
+  document.getElementById("workspace").scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
 }
-document.querySelectorAll('[data-tool]').forEach(button => button.addEventListener('click', () => setTool(button.dataset.tool)));
-runButton.addEventListener('click', () => {
-  if (currentTool === 'youtube') renderThumbnail();
-  if (currentTool === 'direct') renderDirect();
-  if (currentTool === 'audio') convertToMp3();
+
+document.querySelectorAll("[data-tool]").forEach(button => {
+  button.addEventListener("click", () => setTool(button.dataset.tool));
 });
-urlInput.addEventListener('keydown', event => { if (event.key === 'Enter') runButton.click(); });
+
+runButton.addEventListener("click", () => {
+  if (currentTool === "youtube") renderThumbnail();
+  if (currentTool === "direct") renderDirect();
+  if (currentTool === "audio") convertToMp3();
+});
+
+urlInput.addEventListener("keydown", event => {
+  if (event.key === "Enter") runButton.click();
+});
