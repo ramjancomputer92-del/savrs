@@ -1,65 +1,73 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   const fileInput = document.getElementById("mediaFile");
-  const convertButton = document.getElementById("convertButton");
+  const button = document.getElementById("convertButton");
   const status = document.getElementById("converterStatus");
   const downloadArea = document.getElementById("downloadArea");
 
-  let ffmpegInstance = null;
+  let ffmpeg = null;
   let outputUrl = null;
 
-  function showStatus(message) {
+  function show(message) {
     status.textContent = message;
   }
 
-  function loadScript(src) {
+  function loadScript(url) {
     return new Promise((resolve, reject) => {
       const script = document.createElement("script");
-      script.src = src;
+      script.src = url;
+      script.crossOrigin = "anonymous";
       script.onload = resolve;
-      script.onerror = () => reject(new Error("Could not load converter library."));
+      script.onerror = () => reject(
+        new Error("FFmpeg JavaScript library could not load.")
+      );
       document.head.appendChild(script);
     });
   }
 
-  async function getFFmpeg() {
-    if (ffmpegInstance) return ffmpegInstance;
+  async function prepareFFmpeg() {
+    if (ffmpeg && ffmpeg.isLoaded()) return ffmpeg;
 
     if (!window.FFmpeg) {
+      show("Loading MP3 library...");
       await loadScript(
-        "https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"
+        "https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.11.6/ffmpeg.min.js"
       );
     }
 
-    const { createFFmpeg } = window.FFmpeg;
+    if (!window.FFmpeg || !window.FFmpeg.createFFmpeg) {
+      throw new Error("FFmpeg library is unavailable.");
+    }
 
-    const ffmpeg = createFFmpeg({
-      log: false,
+    const createFFmpeg = window.FFmpeg.createFFmpeg;
+
+    ffmpeg = createFFmpeg({
+      log: true,
+      mainName: "main",
       corePath:
-        "https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js"
+        "https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js"
     });
 
-    showStatus("Loading MP3 converter. Please wait...");
+    show("Loading converter engine. Please wait...");
     await ffmpeg.load();
 
-    ffmpegInstance = ffmpeg;
-    return ffmpegInstance;
+    return ffmpeg;
   }
 
-  convertButton.addEventListener("click", async () => {
+  button.addEventListener("click", async () => {
     const file = fileInput.files[0];
 
     if (!file) {
-      showStatus("Please select a video or audio file first.");
+      show("Please select a video or audio file.");
       return;
     }
 
-    if (file.size > 100 * 1024 * 1024) {
-      showStatus("Please select a file smaller than 100 MB.");
+    if (file.size > 50 * 1024 * 1024) {
+      show("Please choose a file smaller than 50 MB.");
       return;
     }
 
-    convertButton.disabled = true;
+    button.disabled = true;
     downloadArea.replaceChildren();
 
     if (outputUrl) {
@@ -67,19 +75,23 @@ document.addEventListener("DOMContentLoaded", () => {
       outputUrl = null;
     }
 
+    let inputName = "savrs_input";
+    const outputName = "savrs_output.mp3";
+
     try {
-      const ffmpeg = await getFFmpeg();
+      const engine = await prepareFFmpeg();
 
-      showStatus("Preparing your media file...");
+      show("Reading your file...");
 
-      const inputName = "input_" + Date.now() + ".media";
-      const outputName = "savrs_audio.mp3";
+      const fileData = new Uint8Array(
+        await file.arrayBuffer()
+      );
 
-      ffmpeg.FS("writeFile", inputName, new Uint8Array(await file.arrayBuffer()));
+      engine.FS("writeFile", inputName, fileData);
 
-      showStatus("Converting to MP3. Please keep this page open...");
+      show("Converting to MP3. Keep this page open...");
 
-      await ffmpeg.run(
+      await engine.run(
         "-i", inputName,
         "-vn",
         "-codec:a", "libmp3lame",
@@ -87,38 +99,40 @@ document.addEventListener("DOMContentLoaded", () => {
         outputName
       );
 
-      const output = ffmpeg.FS("readFile", outputName);
-      const blob = new Blob([output.buffer], { type: "audio/mpeg" });
+      const result = engine.FS("readFile", outputName);
+
+      const blob = new Blob(
+        [result],
+        { type: "audio/mpeg" }
+      );
 
       outputUrl = URL.createObjectURL(blob);
 
-      const downloadLink = document.createElement("a");
-      downloadLink.href = outputUrl;
-      downloadLink.download = "SavRS-Audio.mp3";
-      downloadLink.textContent = "Download MP3";
-      downloadLink.style.display = "inline-block";
-      downloadLink.style.marginTop = "18px";
-      downloadLink.style.padding = "13px 22px";
-      downloadLink.style.background = "#00d5c0";
-      downloadLink.style.color = "#07111f";
-      downloadLink.style.borderRadius = "9px";
-      downloadLink.style.fontWeight = "bold";
-      downloadLink.style.textDecoration = "none";
+      const link = document.createElement("a");
+      link.href = outputUrl;
+      link.download = "SavRS-Audio.mp3";
+      link.textContent = "Download MP3";
+      link.style.display = "inline-block";
+      link.style.marginTop = "18px";
+      link.style.padding = "14px 24px";
+      link.style.background = "#00d5c0";
+      link.style.color = "#07111f";
+      link.style.borderRadius = "9px";
+      link.style.fontWeight = "bold";
+      link.style.textDecoration = "none";
 
-      downloadArea.appendChild(downloadLink);
+      downloadArea.appendChild(link);
 
-      showStatus("Conversion complete! Your MP3 is ready.");
-      
-      ffmpeg.FS("unlink", inputName);
-      ffmpeg.FS("unlink", outputName);
+      show("Success! Your MP3 is ready to download.");
+
+      engine.FS("unlink", inputName);
+      engine.FS("unlink", outputName);
 
     } catch (error) {
-      console.error(error);
-      showStatus(
-        "Conversion failed. Your browser may not support this file or the converter could not load. Try a smaller file or another browser."
-      );
+      console.error("SavRS MP3 error:", error);
+      show("Conversion failed: " + (error.message || "Unknown error"));
     } finally {
-      convertButton.disabled = false;
+      button.disabled = false;
     }
   });
 });
